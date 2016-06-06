@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="illness_type">
+        <item>其他</item>
+        <item>呼吸系统</item>
+        <item>消化系统</item>
+        <item>心血管系统</item>
+        <item>内分泌系统</item>
+        <item>泌尿系统</item>
+        <item>耳鼻咽喉</item>
+        <item>眼、口腔</item>
+    </string-array>
+</resources>

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+    <ImageButton
+        android:id="@+id/id_btn_play"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:background="@drawable/pause"
+    />
+    <SeekBar
+        android:id="@+id/id_seekBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/id_btn_play"
+    />
+    <TextView
+        android:id="@+id/id_tv_leftTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/id_seekBar"
+        android:layout_below="@+id/id_seekBar"
+        android:layout_marginLeft="10dp"
+        android:textColor="#666"
+        android:textSize="14sp"
+    />
+    <TextView
+        android:id="@+id/id_tv_rightTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignRight="@+id/id_seekBar"
+        android:layout_below="@+id/id_seekBar"
+        android:layout_marginRight="10dp"
+        android:textColor="#666"
+        android:textSize="14sp"
+    />
+    <ImageButton
+        android:id="@+id/id_btn_next"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/id_btn_play"
+        android:layout_toRightOf="@+id/id_btn_play"
+        android:background="@drawable/next"
+    />
+    <ImageButton
+        android:id="@+id/id_btn_previous"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/id_btn_play"
+        android:layout_toLeftOf="@+id/id_btn_play"
+        android:background="@drawable/previous"
+    />
+
+
+</RelativeLayout>
