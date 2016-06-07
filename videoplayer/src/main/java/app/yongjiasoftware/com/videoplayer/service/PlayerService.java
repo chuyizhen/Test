@@ -2,6 +2,7 @@ package app.yongjiasoftware.com.videoplayer.service;
 
 import android.app.Service;
 import android.content.Intent;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Binder;
@@ -22,7 +23,8 @@ import app.yongjiasoftware.com.videoplayer.bean.MedieModel;
  * @Date: 2016/6/1.09:04
  * @E-mail: 49467306@qq.com
  */
-public class PlayerService extends Service implements MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener {
+public class PlayerService extends Service implements MediaPlayer.OnCompletionListener,
+        MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener, MediaPlayer.OnBufferingUpdateListener {
     private static final String TAG = PlayerService.class.getSimpleName();
     private MediaPlayer mMediaPlayer;
     private String mPath;
@@ -36,6 +38,7 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
     public void onCreate() {
         super.onCreate();
         mMediaPlayer = new MediaPlayer();
+        mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);// 设置媒体流类型
         mMediaPlayer.setOnCompletionListener(this);
         mMediaPlayer.setOnPreparedListener(this);
         mMediaPlayer.setOnErrorListener(this);
@@ -88,24 +91,25 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
     @Override
     public void onCompletion(MediaPlayer mp) {
         Log.e(TAG, "播放结束");
-        if (mBinder != null)
-            mBinder.toNext();
         if (mRunnable != null)
             mHandler.removeCallbacks(mRunnable);
-        sendBroadcast(new Intent("android.mediaplayer.stop"));
+
+        Intent intent = new Intent("android.mediaplayer.stop");
+        sendBroadcast(intent);
     }
 
     @Override
-    public void onPrepared(MediaPlayer mp) {
+    public void onPrepared(final MediaPlayer mp) {
         Log.i(TAG, "音乐文件准备完毕");
         mp.start();
         sendBroadcast(new Intent("android.mediaplayer.play"));
+        mp.setOnBufferingUpdateListener(this);
         mRunnable = new Runnable() {
             @Override
             public void run() {
-                if (mMediaPlayer.isPlaying()) {
+                if (mp.isPlaying()) {
                     Intent intent = new Intent("android.mediaplayer.updateProgress");
-                    intent.putExtra("progress", mMediaPlayer.getCurrentPosition());
+                    intent.putExtra("progress", mp.getCurrentPosition());
                     sendBroadcast(intent);
                 }
                 mHandler.postDelayed(this, 100);
@@ -118,6 +122,14 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
     public boolean onError(MediaPlayer mp, int what, int extra) {
         mMediaPlayer.reset();
         return false;
+    }
+
+    @Override
+    public void onBufferingUpdate(MediaPlayer mp, int percent) {
+        int d = mp.getDuration() / 100;
+        Intent intent = new Intent("android.mediaplayer.secondSeekBar");
+        intent.putExtra("secondSeekBar", percent * d);
+        sendBroadcast(intent);
     }
 
 
@@ -148,10 +160,13 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
             mMediaPlayer.start();
         }
 
+
         /**
-         * 后一首
+         * 切换到下一首并返回当前位置
+         *
+         * @return
          */
-        public void toNext() {
+        public int toNext() {
             if (mList.size() > (++mIndex)) {
                 try {
                     mMediaPlayer.reset();
@@ -163,14 +178,19 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
                     e.printStackTrace();
                 }
             } else {
+                mIndex = mList.size() - 1;
                 mMediaPlayer.stop();
             }
+            return mIndex;
         }
 
+
         /**
-         * 前一首
+         * 切换到上一首 并返回位置
+         *
+         * @return
          */
-        public void toPrevious() {
+        public int toPrevious() {
             if ((--mIndex) > 0) {
                 try {
                     Log.e(TAG, "成功切换到上一首");
@@ -184,10 +204,17 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
                     e.printStackTrace();
                 }
             } else {
+                mIndex = 0;
                 mMediaPlayer.stop();
             }
+            return mIndex;
         }
 
+        /**
+         * 获取歌曲的总长度
+         *
+         * @return
+         */
         public int getDuration() {
             if (mMediaPlayer.isPlaying())
                 return mMediaPlayer.getDuration();
@@ -195,6 +222,11 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
                 return 0;
         }
 
+        /**
+         * 获取当前的播放进度
+         *
+         * @return
+         */
         public int getCurrentPosition() {
             if (mMediaPlayer.isPlaying())
                 return mMediaPlayer.getCurrentPosition();
@@ -202,12 +234,31 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
                 return 0;
         }
 
+        /**
+         * 跳转到SeekBar 所在位置
+         *
+         * @param progress
+         */
         public void setSeekBar(int progress) {
             if (mMediaPlayer != null)
                 mMediaPlayer.seekTo(progress);
 
         }
 
+        /**
+         * 获取当前音乐文件的播放位置
+         *
+         * @return
+         */
+        public int getIndex() {
+            return mIndex;
+        }
+
+        /**
+         * 判断播放器当前播放状态
+         *
+         * @return
+         */
         public boolean isPlaying() {
             return mMediaPlayer.isPlaying();
         }

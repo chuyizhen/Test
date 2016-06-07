@@ -15,6 +15,7 @@ public class MedieModel implements Parcelable {
     private static final String TAG = MedieModel.class.getSimpleName();
     private String name;
     private Bitmap mBitmap;
+    private boolean isPlaying = false;
 
 
     private String url;
@@ -43,6 +44,17 @@ public class MedieModel implements Parcelable {
         this.url = url;
     }
 
+    public boolean isPlaying() {
+        return isPlaying;
+    }
+
+    public void setPlaying(boolean playing) {
+        isPlaying = playing;
+    }
+
+    public MedieModel() {
+    }
+
     @Override
     public int describeContents() {
         return 0;
@@ -52,19 +64,18 @@ public class MedieModel implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(this.name);
         dest.writeParcelable(this.mBitmap, flags);
+        dest.writeByte(this.isPlaying ? (byte) 1 : (byte) 0);
         dest.writeString(this.url);
-    }
-
-    public MedieModel() {
     }
 
     protected MedieModel(Parcel in) {
         this.name = in.readString();
         this.mBitmap = in.readParcelable(Bitmap.class.getClassLoader());
+        this.isPlaying = in.readByte() != 0;
         this.url = in.readString();
     }
 
-    public static final Parcelable.Creator<MedieModel> CREATOR = new Parcelable.Creator<MedieModel>() {
+    public static final Creator<MedieModel> CREATOR = new Creator<MedieModel>() {
         @Override
         public MedieModel createFromParcel(Parcel source) {
             return new MedieModel(source);

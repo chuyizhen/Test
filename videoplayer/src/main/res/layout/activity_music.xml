@@ -4,6 +4,15 @@
                 android:layout_height="match_parent"
                 android:orientation="vertical">
 
+    <ListView
+        android:id="@+id/id_listView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/id_seekBar"
+    >
+
+    </ListView>
+
     <ImageButton
         android:id="@+id/id_btn_play"
         android:layout_width="wrap_content"
@@ -44,7 +53,7 @@
         android:layout_height="wrap_content"
         android:layout_alignBottom="@+id/id_btn_play"
         android:layout_toRightOf="@+id/id_btn_play"
-        android:background="@drawable/next"
+        android:background="@drawable/selector_next"
     />
     <ImageButton
         android:id="@+id/id_btn_previous"
@@ -52,7 +61,7 @@
         android:layout_height="wrap_content"
         android:layout_alignBottom="@+id/id_btn_play"
         android:layout_toLeftOf="@+id/id_btn_play"
-        android:background="@drawable/previous"
+        android:background="@drawable/selector_previous"
     />
 
 
