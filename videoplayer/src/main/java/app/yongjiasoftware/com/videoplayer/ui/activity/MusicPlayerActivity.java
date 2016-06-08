@@ -11,7 +11,6 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
@@ -37,7 +36,6 @@ import app.yongjiasoftware.com.videoplayer.service.PlayerService;
  */
 public class MusicPlayerActivity extends AppCompatActivity implements View.OnClickListener, SeekBar.OnSeekBarChangeListener {
     private static final String TAG = MusicPlayerActivity.class.getSimpleName();
-    private PlayerService.MyBinder mBinder;
     private ArrayList<MedieModel> mList;
     private int mIndex;
     private ImageButton previousImageButton, nextImageButton, playImageButton;
@@ -47,21 +45,6 @@ public class MusicPlayerActivity extends AppCompatActivity implements View.OnCli
     private ListView mListView;
     private MusicAdapter mAdapter;
 
-
-    private ServiceConnection mConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            Log.i(TAG, "连接成功");
-            mBinder = (PlayerService.MyBinder) service;
-            mBinder.starPlay();
-
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-
-        }
-    };
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -79,6 +62,8 @@ public class MusicPlayerActivity extends AppCompatActivity implements View.OnCli
         intentFilter.addAction("android.mediaplayer.secondSeekBar");
         intentFilter.addAction("android.mediaplayer.stop");
         intentFilter.addAction("android.mediaplayer.updateProgress");
+        intentFilter.addAction("android.mediaplayer.toNext");
+        intentFilter.addAction("android.mediaplayer.toPrevious");
 
         mReceiver = new PlayReceiver();
         registerReceiver(mReceiver, intentFilter);
@@ -94,7 +79,7 @@ public class MusicPlayerActivity extends AppCompatActivity implements View.OnCli
         Intent intent = new Intent(this, PlayerService.class);
         intent.putExtra("Music", mList);
         intent.putExtra("index", mIndex);
-        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+        startService(intent);
     }
 
     private void initViews() {
@@ -123,48 +108,57 @@ public class MusicPlayerActivity extends AppCompatActivity implements View.OnCli
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (mConnection != null) {
-            unbindService(mConnection);
-        }
-        if (mReceiver != null) {
-            unregisterReceiver(mReceiver);
-        }
+//        if (mConnection != null) {
+//            unbindService(mConnection);
+//        }
+//        if (mReceiver != null) {
+//            unregisterReceiver(mReceiver);
+//        }
     }
 
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.id_btn_previous:
-                if (mBinder != null) {
-//                    mIndex = mBinder.toPrevious();
-                    mList.get(mIndex).setPlaying(false);
-                    Log.i(TAG, "mIndex:" + mIndex);
-                    mList.get(mBinder.toPrevious()).setPlaying(true);
-                    mIndex = mBinder.getIndex();
-
-                    mAdapter.notifyDataSetChanged();
-                }
+//                if (mBinder != null) {
+////                    mIndex = mBinder.toPrevious();
+//                    mList.get(mIndex).setPlaying(false);
+//                    Log.i(TAG, "mIndex:" + mIndex);
+//                    mList.get(mBinder.toPrevious()).setPlaying(true);
+//                    mIndex = mBinder.getIndex();
+//
+//                    mAdapter.notifyDataSetChanged();
+//                }
+                sendBroadcast(new Intent("toPrevious"));
                 break;
             case R.id.id_btn_play:
-                if (mBinder != null) {
-                    if (mBinder.isPlaying()) {
-                        mBinder.pausePlay();
-                        playImageButton.setBackgroundResource(R.drawable.play);
-                    } else {
-                        mBinder.toPlay();
-                        playImageButton.setBackgroundResource(R.drawable.pause);
-                    }
+//                if (mBinder != null) {
+//                    if (mBinder.isPlaying()) {
+//                        mBinder.pausePlay();
+//                        playImageButton.setBackgroundResource(R.drawable.play);
+//                    } else {
+//                        mBinder.toPlay();
+//                        playImageButton.setBackgroundResource(R.drawable.pause);
+//                    }
+//                }
+                if (getResources().getDrawable(R.drawable.pause).equals(playImageButton.getBackground())) {
+                    sendBroadcast(new Intent("pausePlay"));
+                    playImageButton.setBackgroundResource(R.drawable.play);
+                } else {
+                    sendBroadcast(new Intent("toPlay"));
+                    playImageButton.setBackgroundResource(R.drawable.pause);
                 }
                 break;
             case R.id.id_btn_next:
-                if (mBinder != null) {
-//                    mIndex = mBinder.toNext();
-                    mList.get(mIndex).setPlaying(false);
-                    mList.get(mBinder.toNext()).setPlaying(true);
-                    mIndex = mBinder.getIndex();
-                    mAdapter.notifyDataSetChanged();
-                    Log.i(TAG, "播放音乐下一首！");
-                }
+//                if (mBinder != null) {
+////                    mIndex = mBinder.toNext();
+//                    mList.get(mIndex).setPlaying(false);
+//                    mList.get(mBinder.toNext()).setPlaying(true);
+//                    mIndex = mBinder.getIndex();
+//                    mAdapter.notifyDataSetChanged();
+//                    Log.i(TAG, "播放音乐下一首！");
+//                }
+                sendBroadcast(new Intent("toNext"));
                 break;
         }
     }
@@ -183,7 +177,11 @@ public class MusicPlayerActivity extends AppCompatActivity implements View.OnCli
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-
+        if (fromUser) {
+            Intent intent = new Intent("seekBarMoveTo");
+            intent.putExtra("seekBar", seekBar.getProgress());
+            sendBroadcast(intent);
+        }
     }
 
     @Override
@@ -193,9 +191,7 @@ public class MusicPlayerActivity extends AppCompatActivity implements View.OnCli
 
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
-        if (mBinder != null) {
-            mBinder.setSeekBar(seekBar.getProgress());
-        }
+
     }
 
     class PlayReceiver extends BroadcastReceiver {
@@ -204,31 +200,54 @@ public class MusicPlayerActivity extends AppCompatActivity implements View.OnCli
         public void onReceive(Context context, Intent intent) {
 
             if (intent.getAction().equals("android.mediaplayer.play")) {
-                if (mBinder != null) {
+                mIndex = intent.getIntExtra("CurrentIndex", 0);
+                int duration = intent.getIntExtra("Duration", -1);
+                if (duration != -1) {
                     Log.i(TAG, "接受到广播");
-                    rightTextView.setText(ShowTime(mBinder.getDuration()));
-                    mSeekBar.setMax(mBinder.getDuration());
-                    mIndex = mBinder.getIndex();
+                    rightTextView.setText(ShowTime(duration));
+                    mSeekBar.setMax(duration);
                     playImageButton.setBackgroundResource(R.drawable.pause);
-
                 }
 
             } else if (intent.getAction().equals("android.mediaplayer.stop")) {
-                playImageButton.setBackgroundResource(R.drawable.play);
-                mSeekBar.setProgress(0);
-                mSeekBar.setSecondaryProgress(0);
-                leftTextView.setText("");
-                mList.get(mBinder.getIndex()).setPlaying(false);
-                mList.get(mBinder.toNext()).setPlaying(true);
-                mAdapter.notifyDataSetChanged();
+                int index = intent.getIntExtra("CurrentIndex", -1);
+                int toNext = intent.getIntExtra("toNext", -1);
+                if (index != -1 && toNext != -1) {
+                    playImageButton.setBackgroundResource(R.drawable.play);
+                    mSeekBar.setProgress(0);
+                    mSeekBar.setSecondaryProgress(0);
+                    leftTextView.setText("");
+                    mList.get(index).setPlaying(false);
+                    mList.get(toNext).setPlaying(true);
+                    mIndex = toNext;
+                    mAdapter.notifyDataSetChanged();
+                }
             } else if (intent.getAction().equals("android.mediaplayer.secondSeekBar")) {
                 int second = intent.getIntExtra("secondSeekBar", -1);
                 mSeekBar.setSecondaryProgress(second);
             } else if (intent.getAction().equals("android.mediaplayer.updateProgress")) {
                 int progress = intent.getIntExtra("progress", -1);
                 if (progress != -1) {
-                    mSeekBar.setProgress(mBinder.getCurrentPosition());
-                    leftTextView.setText(ShowTime(mBinder.getCurrentPosition()));
+                    mSeekBar.setProgress(progress);
+                    leftTextView.setText(ShowTime(progress));
+                }
+            } else if (intent.getAction().equals("android.mediaplayer.toNext")) {
+                int index = intent.getIntExtra("CurrentIndex", -1);
+                int toNext = intent.getIntExtra("toNext", -1);
+                if (index != -1 && toNext != -1) {
+                    mList.get(index).setPlaying(false);
+                    mList.get(toNext).setPlaying(true);
+                    mIndex = toNext;
+                    mAdapter.notifyDataSetChanged();
+                }
+            } else if (intent.getAction().equals("android.mediaplayer.toPrevious")) {
+                int index = intent.getIntExtra("CurrentIndex", -1);
+                int toPrevious = intent.getIntExtra("toPrevious", -1);
+                if (index != -1 && toPrevious != -1) {
+                    mList.get(index).setPlaying(false);
+                    mList.get(toPrevious).setPlaying(true);
+                    mIndex = toPrevious;
+                    mAdapter.notifyDataSetChanged();
                 }
             }
 

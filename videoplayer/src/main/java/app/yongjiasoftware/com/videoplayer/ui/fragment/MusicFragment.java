@@ -12,6 +12,8 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
+import android.widget.SeekBar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +39,8 @@ public class MusicFragment extends Fragment {
     private RecyclerView mRecyclerView;
     private Context mContext;
     private VideoRecyclerViewAdapter mAdapter;
+    private ImageButton playImageButton;
+    private SeekBar mSeekBar;
 
     @Override
     public void onAttach(Context context) {
@@ -81,6 +85,7 @@ public class MusicFragment extends Fragment {
 
             }
         });
+
 
     }
 }
